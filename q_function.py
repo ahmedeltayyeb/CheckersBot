@@ -2,7 +2,8 @@ import numpy as np
 import random
 
 class CheckersQLearning:
-    def __init__(self):
+    def __init__(self, env):
+        self.env = env
         self.board_size = 6
         self.learning_rate = 0.1
         self.discount_factor = 0.9
@@ -16,18 +17,20 @@ class CheckersQLearning:
         # Convert board state to a string for dictionary key
         return str(board.tolist())
     
-    def get_valid_moves(self, board, player):
-        valid_moves = []
-        # Simplified move generation - you'll need to implement actual checkers rules
-        # This is just a placeholder
-        for i in range(self.board_size):
-            for j in range(self.board_size):
-                if board[i][j] == player:
-                    # Add possible moves for this piece
-                    possible_moves = self._get_piece_moves(board, i, j, player)
-                    valid_moves.extend(possible_moves)
-        return valid_moves
+
+    # def get_valid_moves(self, board, player):
+    #     valid_moves = []
+    #     # Simplified move generation - you'll need to implement actual checkers rules
+    #     # This is just a placeholder
+    #     for i in range(self.board_size):
+    #         for j in range(self.board_size):
+    #             if board[i][j] == player:
+    #                 # Add possible moves for this piece
+                    # possible_moves = self._get_piece_moves(board, i, j, player)
+    #                 valid_moves.extend(possible_moves)
+    #     return valid_moves
     
+
     def choose_action(self, state, valid_moves):
         if random.random() < self.epsilon:
             # Exploration: choose random action
@@ -84,7 +87,7 @@ class CheckersQLearning:
             
             while not done:
                 current_state = board.copy()
-                valid_moves = self.get_valid_moves(board, player=1)
+                valid_moves = self.env.valid_moves(player=1)
                 
                 if not valid_moves:
                     done = True
@@ -122,7 +125,7 @@ class CheckersQLearning:
             return True
             
         # Check if opponent has any valid moves
-        opponent_moves = self.get_valid_moves(board, player=2)
+        opponent_moves = self.env.valid_moves(player=2)
         return len(opponent_moves) == 0
 
     def is_loss(self, board):
@@ -135,7 +138,7 @@ class CheckersQLearning:
             return True
             
         # Check if current player has any valid moves
-        player_moves = self.get_valid_moves(board, player=1)
+        player_moves = self.env.valid_moves(player=1)
         return len(player_moves) == 0
 
     def is_capture_move(self, board, previous_board=None):
