@@ -173,7 +173,7 @@ class checkers_env:
                 self.board[row2, col2] = current_piece
 
             if self.capture_piece(action):
-                reward += 2
+                reward += 3
                 # Handle chain captures
                 row2, col2 = action[2], action[3]
                 current_piece = self.board[row2, col2]

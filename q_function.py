@@ -2,15 +2,11 @@ import numpy as np
 import random
 
 class CheckersQLearning:
-    def __init__(self, env):
-        self.env = env
+    def __init__(self, learning_rate, epsilon, discount_factor=0.9):
         self.board_size = 6
-        self.learning_rate = 0.1
-        self.discount_factor = 0.9
-        self.epsilon = 0.1  # For epsilon-greedy exploration
-        
-        # Q-table: state -> action -> value mapping
-        # We'll use a dictionary since the state space is large
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.epsilon = epsilon
         self.q_table = {}
         
     def get_state_key(self, board):

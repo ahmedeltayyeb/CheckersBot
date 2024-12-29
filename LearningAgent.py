@@ -1,26 +1,16 @@
-import checkers_env
-import math
-import random
-import matplotlib
-import matplotlib.pyplot as plt
-from collections import namedtuple, deque
-from itertools import count
 import numpy as np
+import random
+from q_function import CheckersQLearning
 
 class LearningAgent:
 
     def __init__(self, step_size, epsilon, env):
-        '''
-        :param step_size:
-        :param epsilon:
-        :param env:
-        '''
-
-        self.step_size = step_size  # Learning rate
-        self.epsilon = epsilon      # Exploration rate
         self.env = env
-        self.q_table = {}          # State-action value table
-        self.gamma = 0.9           # Discount factor
+        # Pass the hyperparameters to CheckersQLearning
+        self.q_learning = CheckersQLearning(
+            learning_rate=step_size,
+            epsilon=epsilon
+        )
 
 
     def is_win(self, board):
@@ -98,7 +88,7 @@ class LearningAgent:
                 
         return rewards_history
 
-    def _update_q_value(self, state, action, reward, next_state, gamma=0.9):
+    def _update_q_value(self, state, action, reward, next_state):
         """
         Update Q-value for state-action pair
         """
@@ -107,22 +97,22 @@ class LearningAgent:
         action_key = str(action)
         
         # Initialize Q-values if not exists
-        if state_key not in self.q_table:
-            self.q_table[state_key] = {}
-        if action_key not in self.q_table[state_key]:
-            self.q_table[state_key][action_key] = 0.0
+        if state_key not in self.q_learning.q_table:
+            self.q_learning.q_table[state_key] = {}
+        if action_key not in self.q_learning.q_table[state_key]:
+            self.q_learning.q_table[state_key][action_key] = 0.0
             
         # Get maximum Q-value for next state
         next_max_q = 0
-        if next_state_key in self.q_table:
-            next_max_q = max(self.q_table[next_state_key].values(), default=0)
+        if next_state_key in self.q_learning.q_table:
+            next_max_q = max(self.q_learning.q_table[next_state_key].values(), default=0)
         
         # Q-learning update formula
-        current_q = self.q_table[state_key][action_key]
-        new_q = current_q + self.step_size * (
-            reward + gamma * next_max_q - current_q
+        current_q = self.q_learning.q_table[state_key][action_key]
+        new_q = current_q + self.q_learning.learning_rate * (
+            reward + self.q_learning.discount_factor * next_max_q - current_q
         )
-        self.q_table[state_key][action_key] = new_q
+        self.q_learning.q_table[state_key][action_key] = new_q
 
     def select_action(self, state):
         """
@@ -137,24 +127,24 @@ class LearningAgent:
             return None
             
         # Exploration: random move
-        if random.random() < self.epsilon:
+        if random.random() < self.q_learning.epsilon:
             return random.choice(valid_moves)
             
         # Exploitation: best known move
         state_key = str(state.tolist())
-        if state_key not in self.q_table:
-            self.q_table[state_key] = {}
+        if state_key not in self.q_learning.q_table:
+            self.q_learning.q_table[state_key] = {}
             
         best_value = float('-inf')
         best_action = None
         
         for move in valid_moves:
             move_key = str(move)
-            if move_key not in self.q_table[state_key]:
-                self.q_table[state_key][move_key] = 0.0
+            if move_key not in self.q_learning.q_table[state_key]:
+                self.q_learning.q_table[state_key][move_key] = 0.0
                 
-            if self.q_table[state_key][move_key] > best_value:
-                best_value = self.q_table[state_key][move_key]
+            if self.q_learning.q_table[state_key][move_key] > best_value:
+                best_value = self.q_learning.q_table[state_key][move_key]
                 best_action = move
                 
         return best_action or random.choice(valid_moves)
