@@ -1,7 +1,8 @@
 import checkers_env
 from LearningAgent import LearningAgent
 import matplotlib.pyplot as plt
-import numpy as np
+import os
+
 
 def plot_rewards(rewards):
     """Plot the rewards over episodes"""
@@ -17,9 +18,19 @@ def main():
     env = checkers_env.checkers_env()
     agent = LearningAgent(step_size=0.1, epsilon=0.1, env=env)
     
+    # Load existing Q-table if it exists
+    q_table_file = "qtable.pkl"
+    if os.path.exists(q_table_file):
+        agent.q_learning.load_qtable(q_table_file)
+        print("Loaded existing Q-table")
+    
     # Training
     print("Starting training...")
     rewards = agent.learning(episodes=1000)
+    
+    # Save Q-table for next run
+    agent.q_learning.save_qtable(q_table_file)
+    print("Saved Q-table")
     
     # Plot training progress
     plot_rewards(rewards)
@@ -28,6 +39,7 @@ def main():
     print("\nPlaying test game with trained agent...")
     play_game(env, agent)
 
+    
 def play_game(env, agent):
     """Play a single game with the trained agent"""
     env.reset()
@@ -46,7 +58,7 @@ def play_game(env, agent):
             break
         
         # Make move
-        new_state, reward = env.step(action, env.player)
+        new_state, reward = env.step(action, env.player, agent)
         total_reward += reward
         
         print(f"\nMove made: {action}")

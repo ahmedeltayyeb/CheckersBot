@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class checkers_env:
     def __init__(self, board=None, player=None):
         self.board = self.initialize_board() if board is None else board
@@ -98,24 +97,26 @@ class checkers_env:
 
     
     def game_winner(self, board):
-        '''
-        return player 1 win or player -1 win or draw
-        '''
-        if np.sum(board < 0) == 0:  # No pieces for player -1
+        # Check if player -1 has no pieces
+        if np.sum(board < 0) == 0:
             return 1
-        if np.sum(board > 0) == 0:  # No pieces for player 1
+        # Check if player 1 has no pieces
+        if np.sum(board > 0) == 0:
             return -1
-        if len(self.valid_moves(1)) == 0 and len(self.valid_moves(-1)) == 0 and len(self.valid_moves(2)) == 0 and len(self.valid_moves(-2)) == 0:
+        
+        # If neither can move, it's a draw or a win by piece count
+        if len(self.valid_moves(1)) == 0 and len(self.valid_moves(-1)) == 0:
             if np.sum(board > 0) > np.sum(board < 0):
                 return 1
             elif np.sum(board > 0) < np.sum(board < 0):
                 return -1
             else:
                 return 0  # Draw
+        
         return None  # Game ongoing
 
 
-    def step(self, action, player):
+    def step(self, action, player, agent):
         '''
         The transition of board and incurred reward after player performs an action.
         '''
@@ -152,7 +153,8 @@ class checkers_env:
                         break
                         
                     # Execute next capture
-                    next_capture = captures[0]
+
+                    next_capture = agent.choose_capture(captures, self.board)
                     self.board[row2, col2] = 0
                     row2, col2 = next_capture[2], next_capture[3]
                     self.board[row2, col2] = current_piece
@@ -196,41 +198,3 @@ class checkers_env:
                     print(". ", end="")  # Empty space
             print()  # New line after each row
 
-
-
-
-    # def valid_captures(self, player):
-    #     '''
-    #     Check if the player has any possible capture moves available.
-    #     Returns True if captures are possible, False otherwise.
-    #     '''
-    #     def is_valid_position(x, y):
-    #         return 0 <= x < 6 and 0 <= y < 6 and self.board[x][y] == 0
-
-    #     def is_king(x, y):
-    #         return abs(self.board[x][y]) == 2
-
-    #     starters = self.possible_pieces(player)
-        
-    #     # Define forward and backward directions based on player
-    #     if player == 1:
-    #         forward_directions = [(1, -1), (1, 1)]     # Down-left, Down-right
-    #         backward_directions = [(-1, -1), (-1, 1)]  # Up-left, Up-right
-    #     else:  # player == -1
-    #         forward_directions = [(-1, -1), (-1, 1)]   # Up-left, Up-right
-    #         backward_directions = [(1, -1), (1, 1)]    # Down-left, Down-right
-
-    #     for x, y in starters:
-    #         # Regular pieces can only move forward, kings can move both ways
-    #         directions = forward_directions
-    #         if is_king(x, y):
-    #             directions = forward_directions + backward_directions
-
-    #         for dx, dy in directions:
-    #             nx, ny = x + dx, y + dy
-    #             if 0 <= nx < 6 and 0 <= ny < 6:  # Check bounds
-    #                 if self.board[nx][ny] == -player or self.board[nx][ny] == -player * 2:
-    #                     jx, jy = x + 2*dx, y + 2*dy
-    #                     if is_valid_position(jx, jy):   # Check if capture landing is valid
-    #                         return True  # Found at least one valid capture
-    #     return False  # No captures found

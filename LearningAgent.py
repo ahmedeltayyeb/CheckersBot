@@ -35,7 +35,7 @@ class LearningAgent:
             done = False
             
             while not done:
-                current_state = self.env.board.copy()
+                current_state = np.copy(self.env.board)
                 valid_moves = self.env.valid_moves(self.env.player)
                 
                 if not valid_moves:
@@ -43,7 +43,7 @@ class LearningAgent:
                 
                 # Select and execute action
                 action = self.q_learning.choose_action(current_state, valid_moves)
-                new_state, reward = self.env.step(action, self.env.player)
+                new_state, reward = self.env.step(action, self.env.player, self)
                 
                 # Update Q-values and track reward
                 self.q_learning.update_q_value(current_state, action, reward, new_state)
@@ -77,3 +77,9 @@ class LearningAgent:
             return None
             
         return self.q_learning.choose_action(state, valid_moves)
+
+    def choose_capture(self, captures, board):
+        """
+        Delegate capture choice to Q-learning agent
+        """
+        return self.q_learning.choose_capture(captures, board)
