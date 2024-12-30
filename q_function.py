@@ -14,19 +14,6 @@ class CheckersQLearning:
         return str(board.tolist())
     
 
-    # def get_valid_moves(self, board, player):
-    #     valid_moves = []
-    #     # Simplified move generation - you'll need to implement actual checkers rules
-    #     # This is just a placeholder
-    #     for i in range(self.board_size):
-    #         for j in range(self.board_size):
-    #             if board[i][j] == player:
-    #                 # Add possible moves for this piece
-                    # possible_moves = self._get_piece_moves(board, i, j, player)
-    #                 valid_moves.extend(possible_moves)
-    #     return valid_moves
-    
-
     def choose_action(self, state, valid_moves):
         if random.random() < self.epsilon:
             # Exploration: choose random action
@@ -49,9 +36,12 @@ class CheckersQLearning:
                 if self.q_table[state_key][move_key] > best_value:
                     best_value = self.q_table[state_key][move_key]
                     best_action = move
-            
-            return best_action or random.choice(valid_moves)
+            if best_action:
+                return best_action
+            else:
+                return random.choice(valid_moves)
     
+
     def update_q_value(self, state, action, reward, next_state):
         state_key = self.get_state_key(state)
         next_state_key = self.get_state_key(next_state)
@@ -76,80 +66,45 @@ class CheckersQLearning:
         self.q_table[state_key][action_key] = new_q
     
     
-    def train(self, episodes=1000):
+    def train(self, env, episodes=1000):
+        rewards_per_episode = []
+        
         for episode in range(episodes):
-            board = self.initialize_board()
+            # Use env to initialize and manage game state
+            state = env.reset()  # Should return initial board state
             done = False
+            episode_reward = 0
+            
+            # Decay epsilon over time
+            self.epsilon = max(0.01, self.epsilon * 0.995)
             
             while not done:
-                current_state = board.copy()
-                valid_moves = self.env.valid_moves(player=1)
+                current_state = state.copy()
+                valid_moves = env.valid_moves(env.player)
                 
                 if not valid_moves:
                     done = True
                     continue
                 
+                # Choose action using our Q-learning logic
                 action = self.choose_action(current_state, valid_moves)
-                previous_board = board.copy()  # Store previous board state
-                new_board = self.apply_move(board, action)
-                reward = self.get_reward(new_board, previous_board)  # Pass both states
                 
-                self.update_q_value(current_state, action, reward, new_board)
-                board = new_board
+                # Let environment handle move execution and reward calculation
+                next_state, reward, done, _ = env.step(action)
                 
-                if self.is_game_over(board):
-                    done = True
-
-
-    def get_reward(self, board):
-        # Example reward function
-        if self.is_win(board):
-            return 5.0
-        elif self.is_loss(board):
-            return -5.0
-        elif self.is_capture_move(board):
-            return 1.0
-        return 0.0
-    
-    def is_win(self, board):
-        """Check if the current player (assumed to be 1) has won"""
-        # Win conditions:
-        # 1. Opponent has no pieces left
-        # 2. Opponent has no valid moves
-        opponent_pieces = np.count_nonzero(board == 2)  # assuming 2 represents opponent
-        if opponent_pieces == 0:
-            return True
+                # Update Q-values
+                self.update_q_value(current_state, action, reward, next_state)
+                state = next_state
+                episode_reward += reward
             
-        # Check if opponent has any valid moves
-        opponent_moves = self.env.valid_moves(player=2)
-        return len(opponent_moves) == 0
-
-    def is_loss(self, board):
-        """Check if the current player (assumed to be 1) has lost"""
-        # Loss conditions:
-        # 1. Current player has no pieces left
-        # 2. Current player has no valid moves
-        player_pieces = np.count_nonzero(board == 1)  # assuming 1 represents current player
-        if player_pieces == 0:
-            return True
+            rewards_per_episode.append(episode_reward)
             
-        # Check if current player has any valid moves
-        player_moves = self.env.valid_moves(player=1)
-        return len(player_moves) == 0
-
-    def is_capture_move(self, board, previous_board=None):
-        """
-        Check if the last move was a capture move by comparing piece count
-        Note: This requires keeping track of the previous board state
-        """
-        if previous_board is None:
-            return False
-            
-        previous_pieces = np.count_nonzero(previous_board != 0)
-        current_pieces = np.count_nonzero(board != 0)
+            # Log progress
+            if (episode + 1) % 100 == 0:
+                avg_reward = sum(rewards_per_episode[-100:]) / 100
+                print(f"Episode {episode + 1}/{episodes}, "
+                    f"Average Reward: {avg_reward:.2f}, "
+                    f"Epsilon: {self.epsilon:.3f}")
         
-        return current_pieces < previous_pieces
+        return rewards_per_episode
 
-    def _count_pieces(self, board, player):
-        """Helper method to count pieces for a specific player"""
-        return np.count_nonzero(board == player)

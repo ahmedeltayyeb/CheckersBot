@@ -95,43 +95,7 @@ class checkers_env:
                 self.board[captured_row, captured_col] = 0
                 return True
         return False
-    
 
-    def valid_captures(self, player):
-        '''
-        Check if the player has any possible capture moves available.
-        Returns True if captures are possible, False otherwise.
-        '''
-        def is_valid_position(x, y):
-            return 0 <= x < 6 and 0 <= y < 6 and self.board[x][y] == 0
-
-        def is_king(x, y):
-            return abs(self.board[x][y]) == 2
-
-        starters = self.possible_pieces(player)
-        
-        # Define forward and backward directions based on player
-        if player == 1:
-            forward_directions = [(1, -1), (1, 1)]     # Down-left, Down-right
-            backward_directions = [(-1, -1), (-1, 1)]  # Up-left, Up-right
-        else:  # player == -1
-            forward_directions = [(-1, -1), (-1, 1)]   # Up-left, Up-right
-            backward_directions = [(1, -1), (1, 1)]    # Down-left, Down-right
-
-        for x, y in starters:
-            # Regular pieces can only move forward, kings can move both ways
-            directions = forward_directions
-            if is_king(x, y):
-                directions = forward_directions + backward_directions
-
-            for dx, dy in directions:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < 6 and 0 <= ny < 6:  # Check bounds
-                    if self.board[nx][ny] == -player or self.board[nx][ny] == -player * 2:
-                        jx, jy = x + 2*dx, y + 2*dy
-                        if is_valid_position(jx, jy):   # Check if capture landing is valid
-                            return True  # Found at least one valid capture
-        return False  # No captures found
     
     def game_winner(self, board):
         '''
@@ -205,6 +169,8 @@ class checkers_env:
                 reward += 12
             elif winner == -player:
                 reward -= 12
+            elif winner == 0:
+                reward -= 1
         else:
             reward -= 3  # Invalid action penalty
 
@@ -229,3 +195,42 @@ class checkers_env:
                 else:
                     print(". ", end="")  # Empty space
             print()  # New line after each row
+
+
+
+
+    # def valid_captures(self, player):
+    #     '''
+    #     Check if the player has any possible capture moves available.
+    #     Returns True if captures are possible, False otherwise.
+    #     '''
+    #     def is_valid_position(x, y):
+    #         return 0 <= x < 6 and 0 <= y < 6 and self.board[x][y] == 0
+
+    #     def is_king(x, y):
+    #         return abs(self.board[x][y]) == 2
+
+    #     starters = self.possible_pieces(player)
+        
+    #     # Define forward and backward directions based on player
+    #     if player == 1:
+    #         forward_directions = [(1, -1), (1, 1)]     # Down-left, Down-right
+    #         backward_directions = [(-1, -1), (-1, 1)]  # Up-left, Up-right
+    #     else:  # player == -1
+    #         forward_directions = [(-1, -1), (-1, 1)]   # Up-left, Up-right
+    #         backward_directions = [(1, -1), (1, 1)]    # Down-left, Down-right
+
+    #     for x, y in starters:
+    #         # Regular pieces can only move forward, kings can move both ways
+    #         directions = forward_directions
+    #         if is_king(x, y):
+    #             directions = forward_directions + backward_directions
+
+    #         for dx, dy in directions:
+    #             nx, ny = x + dx, y + dy
+    #             if 0 <= nx < 6 and 0 <= ny < 6:  # Check bounds
+    #                 if self.board[nx][ny] == -player or self.board[nx][ny] == -player * 2:
+    #                     jx, jy = x + 2*dx, y + 2*dy
+    #                     if is_valid_position(jx, jy):   # Check if capture landing is valid
+    #                         return True  # Found at least one valid capture
+    #     return False  # No captures found
