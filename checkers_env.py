@@ -1,4 +1,5 @@
 import numpy as np
+from config import reward_values
 
 class checkers_env:
     def __init__(self, board=None, player=None):
@@ -22,6 +23,7 @@ class checkers_env:
         self.board = self.initialize_board()
         self.player = 1
         self.count = 0
+        self.visited_states = set()
 
 
     def possible_pieces(self, player):
@@ -117,68 +119,99 @@ class checkers_env:
 
 
     def step(self, action, player, agent):
-        '''
+        """
         The transition of board and incurred reward after player performs an action.
-        '''
+
+        Returns:
+            next_state (np.array): The updated board state.
+            reward (float): The reward obtained from this action.
+            done (bool): Whether the game/episode has ended.
+            info (dict): Additional info, e.g., 'winner'.
+        """
         reward = 0
+        done = False
+        info = {}
+
         row1, col1, row2, col2 = map(int, action)
 
         if action in self.valid_moves(player):
-            # Store the current piece (including its king status if it is one)
+            # Remove the piece from the old position
             current_piece = self.board[row1, col1]
             self.board[row1, col1] = 0
 
-            # If it's already a king, keep it as a king
-            # if abs(current_piece) == 2:
-            #     self.board[row2, col2] = current_piece
-            # If it's a regular piece reaching the opposite end, promote to king
+            # Promotion if reached the last row (for a regular piece)
             if (player == 1 and row2 == 5) or (player == -1 and row2 == 0):
-                self.board[row2, col2] = player * 2  # Convert to king (2 or -2)
+                self.board[row2, col2] = player * 2
+                reward += reward_values["promote"]
             else:
                 self.board[row2, col2] = current_piece
 
+            # Check if it's a capture move
             if self.capture_piece(action):
-                reward += 3
+                reward += reward_values["capture"]
+
                 # Handle chain captures
                 row2, col2 = action[2], action[3]
                 current_piece = self.board[row2, col2]
-                
+
                 while True:
                     captures = [
                         move for move in self.valid_moves(player)
                         if move[0] == row2 and move[1] == col2 and abs(move[2] - row2) == 2
                     ]
-                    
                     if not captures:
                         break
-                        
-                    # Execute next capture
 
+                    # Ask the agent which capture to choose (or pick the first)
                     next_capture = agent.choose_capture(captures, self.board)
                     self.board[row2, col2] = 0
                     row2, col2 = next_capture[2], next_capture[3]
                     self.board[row2, col2] = current_piece
+
                     self.capture_piece(next_capture)
-                    reward += 2
-                    
-                    # Check for promotion
-                    if abs(current_piece) == 1 and ((player == 1 and row2 == 5) or (player == -1 and row2 == 0)):
+                    reward += reward_values["multi_captures"]
+
+                    # Check promotion again for a newly moved piece
+                    if abs(current_piece) == 1 and (
+                        (player == 1 and row2 == 5) or (player == -1 and row2 == 0)
+                    ):
                         self.board[row2, col2] = 2 * player
                         current_piece = 2 * player
-            
+
+            visited_states = set()
+            # During the step function or reward calculation
+            current_state_key = str(self.board.tolist())
+            if current_state_key in visited_states:
+                reward -= reward_values["repeated_state"]  # Penalize for revisiting the same state
+            else:
+                visited_states.add(current_state_key)
+
+            # Check for winner or draw
             winner = self.game_winner(self.board)
-            if winner == player:
-                reward += 12
-            elif winner == -player:
-                reward -= 12
-            elif winner == 0:
-                reward -= 1
+            if winner is not None:
+                # Game is over
+                done = True
+                if winner == player:
+                    reward += reward_values["win"]
+                    info['winner'] = player
+                elif winner == -player:
+                    reward -= reward_values["lose"]
+                    info['winner'] = -player
+                else:
+                    # winner == 0 means draw
+                    reward -= reward_values["draw"]
+                    info['winner'] = 0
         else:
-            reward -= 3  # Invalid action penalty
+            reward -= reward_values["invalid"]  # Invalid action penalty
 
         self.count += reward
+        # Switch player
         self.player = -player
-        return [self.board, reward]
+
+        # next_state is the updated board. Copy if you want to avoid direct mutation:
+        next_state = self.board.copy()
+
+        return next_state, reward, done, info
     
     def render(self):
         """Display the current board state with pieces and kings"""
@@ -197,4 +230,3 @@ class checkers_env:
                 else:
                     print(". ", end="")  # Empty space
             print()  # New line after each row
-
