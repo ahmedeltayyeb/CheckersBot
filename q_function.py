@@ -1,9 +1,9 @@
-import numpy as np
 import random
 import pickle
 
+
 class CheckersQLearning:
-    def __init__(self, learning_rate, epsilon, discount_factor=0.9):
+    def __init__(self, learning_rate, epsilon, discount_factor):
         self.board_size = 6
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
@@ -101,45 +101,6 @@ class CheckersQLearning:
         )
         self.q_table[state_key][action_key] = new_q
     
-    
-    def train(self, env, episodes=1000):
-        rewards_per_episode = []
-        
-        for episode in range(episodes):
-            state = env.reset()
-            done = False
-            episode_reward = 0
-            
-            self.epsilon = max(0.01, self.epsilon * 0.995)
-            
-            while not done:
-                current_state = np.copy(state)
-                valid_moves = env.valid_moves(env.player)
-                
-                if not valid_moves:
-                    done = True
-                    continue
-                
-                action = self.choose_action(current_state, valid_moves)
-                next_state, reward = env.step(action, env.player, self)  # Only get next_state and reward
-                
-                self.update_q_value(current_state, action, reward, next_state)
-                state = next_state
-                episode_reward += reward
-                
-                # Check if game is over
-                if env.game_winner(next_state) is not None:
-                    done = True
-            
-            rewards_per_episode.append(episode_reward)
-            
-            if (episode + 1) % 100 == 0:
-                avg_reward = sum(rewards_per_episode[-100:]) / 100
-                print(f"Episode {episode + 1}/{episodes}, "
-                      f"Average Reward: {avg_reward:.2f}, "
-                      f"Epsilon: {self.epsilon:.3f}")
-        
-        return rewards_per_episode
 
     def choose_capture(self, captures, board):
         """
