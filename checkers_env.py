@@ -1,5 +1,6 @@
 import numpy as np
 from config import reward_values
+import random
 
 class checkers_env:
     def __init__(self, board=None, player=None):
@@ -24,6 +25,7 @@ class checkers_env:
         self.player = 1
         self.count = 0
         self.visited_states = set()
+        self.promotion_count = 0
 
 
     def possible_pieces(self, player):
@@ -142,7 +144,9 @@ class checkers_env:
             # Promotion if reached the last row (for a regular piece)
             if (player == 1 and row2 == 5) or (player == -1 and row2 == 0):
                 self.board[row2, col2] = player * 2
-                reward += reward_values["promote"]
+                if self.promotion_count < 12:
+                    reward += reward_values["promote"]
+                    self.promotion_count += 1
             else:
                 self.board[row2, col2] = current_piece
 
@@ -163,7 +167,11 @@ class checkers_env:
                         break
 
                     # Ask the agent which capture to choose (or pick the first)
-                    next_capture = agent.choose_capture(captures, self.board)
+                    # Use `choose_capture` if available, otherwise select randomly
+                    if hasattr(agent, "choose_capture"):
+                        next_capture = agent.choose_capture(captures, self.board)
+                    else:
+                        next_capture = random.choice(captures)  # RandomAgent logic
                     self.board[row2, col2] = 0
                     row2, col2 = next_capture[2], next_capture[3]
                     self.board[row2, col2] = current_piece
@@ -191,12 +199,9 @@ class checkers_env:
             if winner is not None:
                 # Game is over
                 done = True
-                if winner == player:
+                if winner != 0:
                     reward += reward_values["win"]
-                    info['winner'] = player
-                elif winner == -player:
-                    reward -= reward_values["lose"]
-                    info['winner'] = -player
+                    info['winner'] = winner
                 else:
                     # winner == 0 means draw
                     reward -= reward_values["draw"]
@@ -230,3 +235,6 @@ class checkers_env:
                 else:
                     print(". ", end="")  # Empty space
             print()  # New line after each row
+
+    def render_board(self):
+        pass
