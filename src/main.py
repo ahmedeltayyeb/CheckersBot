@@ -19,18 +19,18 @@ def plot_rewards(rewards):
 def main():
     # Initialize environment and agent
     env = checkers_env.checkers_env()
-    pre_trained_agent = LearningAgent(learning_rate=learning_rate, epsilon=epsilon, discount_factor=discount_factor, env=env)
+    # pre_trained_agent = LearningAgent(learning_rate=learning_rate, epsilon=epsilon, discount_factor=discount_factor, env=env)
     
     # Load existing Q-table if it exists
-    pretrained_q_table_file = "pre_trained_qtable.pkl"
-    if os.path.exists(pretrained_q_table_file):
-        pre_trained_agent.q_learning.load_qtable(pretrained_q_table_file)
-        print("Loaded Pre-trained Q-table")
+    # pretrained_q_table_file = "pre_trained_qtable.pkl"
+    # if os.path.exists(pretrained_q_table_file):
+    #     pre_trained_agent.q_learning.load_qtable(pretrained_q_table_file)
+    #     print("Loaded Pre-trained Q-table")
     
     agent = LearningAgent(learning_rate=learning_rate, epsilon=epsilon, discount_factor=discount_factor, env=env)
-    random_agent = RandomAgent(env=env)
+    # random_agent = RandomAgent(env=env)
     # Training
-    print("Starting training...")
+    # print("Starting training...")
 
     # Load existing Q-table if it exists
     current_training = "new_q_table.pkl"
