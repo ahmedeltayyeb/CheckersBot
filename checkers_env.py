@@ -235,6 +235,3 @@ class checkers_env:
                 else:
                     print(". ", end="")  # Empty space
             print()  # New line after each row
-
-    def render_board(self):
-        pass

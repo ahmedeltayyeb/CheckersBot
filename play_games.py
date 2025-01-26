@@ -21,14 +21,14 @@ class RandomAgent:
             return None  # No valid moves available
         return random.choice(valid_moves)  # Randomly choose a valid move
     
-    def play_vs_random(self, env, trained_agent, episodes=10):
+    def play_vs_random(self, env, trained_agent, epochs):
         """
         Test the trained agent against a random agent.
 
         Args:
             env: The checkers environment.
             trained_agent: The trained learning agent.
-            episodes: Number of matches to play.
+            epochs: Number of matches to play.
 
         Returns:
             dict: Match statistics including wins, losses, and draws.
@@ -36,7 +36,7 @@ class RandomAgent:
         random_agent = RandomAgent(env)
         results = {"trained_agent_wins": 0, "random_agent_wins": 0, "draws": 0}
 
-        for episode in range(episodes):
+        for episode in range(epochs):
             env.reset()
             done = False
             while not done:
@@ -71,7 +71,7 @@ class RandomAgent:
                         results["draws"] += 1
                     break
 
-            print(f"Episode {episode + 1}/{episodes}: Winner {info.get('winner', 'None')}")
+            # print(f"Episode {episode + 1}/{epochs}: Winner {info.get('winner', 'None')}")
 
         return results
     
@@ -80,10 +80,13 @@ def play_against_agent(env, agent):
     """Let the trained agent play against itself"""
     env.reset()
     done = False
-    total_reward = 0
+    player_1_reward = 0  # Reward for player 1
+    player_2_reward = 0  # Reward for player -1
     
-    print("\nStarting new game:")
-    env.render()
+    # print("\nStarting new game:")
+    # env.render()
+    print("Final result of test game:")
+
     
     while not done:
         current_state = env.board.copy()
@@ -95,19 +98,30 @@ def play_against_agent(env, agent):
         
         # Make move
         _, reward, done, info = env.step(action, env.player, agent)
-        total_reward += reward
         
-        print(f"\nMove made: {action}")
-        env.render()
+        # Accumulate rewards for each player
+        if env.player == 1:
+            player_1_reward += reward
+        else:
+            player_2_reward += reward
         
-        if done:
-            print(f"\nGame Over! Total reward: {total_reward}")
-            if info.get('winner') == 1:
-                print("Player 1 wins!")
-            elif info.get('winner') == -1:
-                print("Player -1 wins!")
-            else:
-                print("Draw!")
+        # print(f"\nMove made: {action}")
+        # env.render()
+
+    # Calculate the maximum reward
+    max_reward = max(player_1_reward, player_2_reward)
+    
+    if done:
+        print("\nGame Over!")
+        print(f"\nTotal reward for Player 1: {player_1_reward}")
+        print(f"Total reward for Player -1: {player_2_reward}")
+        print(f"Maximum reward: {max_reward}")        
+    if info.get('winner') == 1:
+        print("Player 1 wins!")
+    elif info.get('winner') == -1:
+        print("Player -1 wins!")
+    else:
+        print("Draw!")
 
 
 def play_vs_human(env, agent):
