@@ -105,17 +105,11 @@ def play_against_agent(env, agent):
         else:
             player_2_reward += reward
         
-        # print(f"\nMove made: {action}")
-        # env.render()
-
-    # Calculate the maximum reward
-    max_reward = max(player_1_reward, player_2_reward)
     
     if done:
         print("\nGame Over!")
         print(f"\nTotal reward for Player 1: {player_1_reward}")
-        print(f"Total reward for Player -1: {player_2_reward}")
-        print(f"Maximum reward: {max_reward}")        
+        print(f"Total reward for Player -1: {player_2_reward}")   
     if info.get('winner') == 1:
         print("Player 1 wins!")
     elif info.get('winner') == -1:

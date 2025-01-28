@@ -8,7 +8,7 @@ reward_values = {
     "multi_captures": 7,
     "win": 18,
     "invalid": -3,
-    "draw": -10,
+    "lose": -10,
     "repeated_state": -2,
     "promote": 4
 }

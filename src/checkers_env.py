@@ -33,7 +33,7 @@ class checkers_env:
         Find all pieces that belong to the current player
         
         Args:
-            player: 1 for player 1, -1 for player 2
+            player: 1 & 2 for player 1, -1 & -2 for player 2
             
         Returns:
             list of tuples: Coordinates (x,y) of all pieces belonging to the player
@@ -49,8 +49,8 @@ class checkers_env:
     def valid_moves(self, player):
         '''
         Normal pieces can only move forward, king pieces can move both ways:
-        - Player 1 (P/K): regular pieces move downward, kings move both ways
-        - Player -1 (E/Q): regular pieces move upward, kings move both ways
+        - Player 1 (P): regular pieces move downward
+        - Player -1 (E): regular pieces move upward
         '''
         def is_valid_position(x, y):
             return 0 <= x < 6 and 0 <= y < 6 and self.board[x][y] == 0
@@ -101,28 +101,21 @@ class checkers_env:
 
     
     def game_winner(self, board):
-        # Check if player -1 has no pieces
         if np.sum(board < 0) == 0:
             return 1
-        # Check if player 1 has no pieces
         if np.sum(board > 0) == 0:
             return -1
-        
-        # If neither can move, it's a draw or a win by piece count
-        if len(self.valid_moves(1)) == 0 and len(self.valid_moves(-1)) == 0:
-            if np.sum(board > 0) > np.sum(board < 0):
-                return 1
-            elif np.sum(board > 0) < np.sum(board < 0):
-                return -1
-            else:
-                return 0  # Draw
-        
-        return None  # Game ongoing
 
+        # Check if the current player has no valid moves
+        if len(self.valid_moves(self.player)) == 0:
+            return -self.player 
+
+        return None
+    
 
     def step(self, action, player, agent):
         """
-        The transition of board and incurred reward after player performs an action.
+        The transition of board and incurred reward after player performs an action. Handles giving rewards and multiple captures.
 
         Returns:
             next_state (np.array): The updated board state.
@@ -166,12 +159,11 @@ class checkers_env:
                     if not captures:
                         break
 
-                    # Ask the agent which capture to choose (or pick the first)
                     # Use `choose_capture` if available, otherwise select randomly
                     if hasattr(agent, "choose_capture"):
                         next_capture = agent.choose_capture(captures, self.board)
                     else:
-                        next_capture = random.choice(captures)  # RandomAgent logic
+                        next_capture = random.choice(captures)
                     self.board[row2, col2] = 0
                     row2, col2 = next_capture[2], next_capture[3]
                     self.board[row2, col2] = current_piece
@@ -187,29 +179,28 @@ class checkers_env:
                         current_piece = 2 * player
 
             visited_states = set()
-            # During the step function or reward calculation
             current_state_key = str(self.board.tolist())
             if current_state_key in visited_states:
-                reward -= reward_values["repeated_state"]  # Penalize for revisiting the same state
+                reward += reward_values["repeated_state"]  # Penalize for revisiting the same state, to avoid going back and forth
             else:
                 visited_states.add(current_state_key)
 
-            # Check for winner or draw
+            # Check for winner
             winner = self.game_winner(self.board)
             if winner is not None:
                 # Game is over
                 done = True
-                if winner != 0:
+                if winner == player:
                     reward += reward_values["win"]
-                    info['winner'] = winner
+                    info['winner'] = player
                 else:
-                    # winner == 0 means draw
-                    reward -= reward_values["draw"]
-                    info['winner'] = 0
+                    reward += reward_values["lose"]
+                    info['winner'] = -player
         else:
-            reward -= reward_values["invalid"]  # Invalid action penalty
+            reward += reward_values["invalid"]  # Invalid action penalty
 
-        self.count += reward
+        if player == 1:
+            self.count += reward
         # Switch player
         self.player = -player
 
@@ -217,7 +208,8 @@ class checkers_env:
         next_state = self.board.copy()
 
         return next_state, reward, done, info
-    
+
+
     def render(self):
         """Display the current board state with pieces and kings"""
         print("  " + " ".join(map(str, range(6))))

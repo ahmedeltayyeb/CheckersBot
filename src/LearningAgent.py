@@ -38,7 +38,6 @@ class LearningAgent:
         # Determine phase boundaries
         random_agent_phase = int(random_agent_percentage * epochs)
         self_play_phase = int(self_play_percentage * epochs)
-        pretrained_agent_phase = epochs - (random_agent_phase + self_play_phase)
 
         for episode in range(epochs):
             self.env.reset()
@@ -60,18 +59,18 @@ class LearningAgent:
                 if not valid_moves:
                     break
 
-                # Agent's turn
+                # Agent's turn (Player 1)
                 if self.env.player == 1:
                     action = self.q_learning.choose_action(current_state, valid_moves)
                     next_state, reward, done, _ = self.env.step(action, self.env.player, self)
                     self.q_learning.update_q_value(current_state, action, reward, next_state)
-                    episode_reward += reward
+                    episode_reward += reward  # Only track rewards for Player 1
 
-                # Opponent's turn
+                # Opponent's turn (Player -1) 
                 else:
                     if opponent is not None:
-                        action = opponent.q_learning.choose_action(current_state, valid_moves) \
-                            if hasattr(opponent, "q_learning") else opponent.select_action(current_state)
+                        action = (opponent.q_learning.choose_action(current_state, valid_moves) 
+                                  if hasattr(opponent, "q_learning") else opponent.select_action(current_state))
                         next_state, _, done, _ = self.env.step(action, self.env.player, opponent)
 
             rewards_history.append(episode_reward)
@@ -86,6 +85,7 @@ class LearningAgent:
 
         return rewards_history
     
+
     def select_action(self, state):
         """
         Choose action for current state.
