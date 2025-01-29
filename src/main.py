@@ -62,7 +62,7 @@ def main():
     print(f"Results after 1000 games:")
     print(f"Trained Agent Wins: {results['trained_agent_wins']}")
     print(f"Random Agent Wins: {results['random_agent_wins']}")
-    print(f"Draws: {results['draws']}")
+
     
     # A human can play against the trained agent
     play_vs_human(env, agent)

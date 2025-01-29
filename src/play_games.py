@@ -34,7 +34,7 @@ class RandomAgent:
             dict: Match statistics including wins, losses, and draws.
         """
         random_agent = RandomAgent(env)
-        results = {"trained_agent_wins": 0, "random_agent_wins": 0, "draws": 0}
+        results = {"trained_agent_wins": 0, "random_agent_wins": 0}
 
         for episode in range(epochs):
             env.reset()
@@ -67,8 +67,6 @@ class RandomAgent:
                         results["trained_agent_wins"] += 1
                     elif info.get("winner") == -1:
                         results["random_agent_wins"] += 1
-                    else:
-                        results["draws"] += 1
                     break
 
             # print(f"Episode {episode + 1}/{epochs}: Winner {info.get('winner', 'None')}")
@@ -83,14 +81,15 @@ def play_against_agent(env, agent):
     player_1_reward = 0  # Reward for player 1
     player_2_reward = 0  # Reward for player -1
     
-    # print("\nStarting new game:")
-    # env.render()
+    print("\nStarting new game:")
+    env.render()
     print("Final result of test game:")
 
     
     while not done:
         current_state = env.board.copy()
         action = agent.select_action(current_state)
+        env.render()
         
         if action is None:
             print("No valid moves available")
